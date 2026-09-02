@@ -108,16 +108,17 @@ class BreezeAgent:
         If the command implies typing text, use action "type" and provide the text.
         If the command implies pressing a keyboard shortcut, use action "hotkey" and provide the keys (e.g. ["win"], ["enter"]).
         If the command implies scrolling, use action "scroll" and provide amount (positive for up, negative for down).
+        If the command asks to open an application or program, use action "open_app" and provide the "app_name".
         If the user asks a general question, just reply with text.
-        To open an app on Windows, you must return a list of actions: hotkey "win", then type the app name, then hotkey "enter".
         Respond with a JSON ARRAY of action objects ONLY, for example:
         [
             {{
-                "action": "click" | "highlight" | "reply" | "type" | "scroll" | "hotkey",
+                "action": "click" | "highlight" | "reply" | "type" | "scroll" | "hotkey" | "open_app",
                 "box_2d": [ymin, xmin, ymax, xmax],
                 "text": "Your reply or text to type",
                 "amount": 500,
-                "keys": ["win", "d"]
+                "keys": ["win", "d"],
+                "app_name": "camera"
             }}
         ]
         """
@@ -190,6 +191,19 @@ class BreezeAgent:
                     self.action_count += 1
                     amount = result.get("amount", -500)
                     pyautogui.scroll(amount)
+                    
+                elif action == "open_app" and "app_name" in result:
+                    if self.action_count >= 3:
+                        self.ui.show_error("Action limit reached! Please confirm before continuing.")
+                        break
+                    self.action_count += 1
+                    app_name = result["app_name"]
+                    import time
+                    pyautogui.hotkey("win")
+                    time.sleep(0.5)
+                    pyautogui.typewrite(app_name, interval=0.05)
+                    time.sleep(0.5)
+                    pyautogui.hotkey("enter")
 
                 
         except Exception as e:
@@ -208,16 +222,17 @@ class BreezeAgent:
         If the command implies typing text, use action "type" and provide the text.
         If the command implies pressing a keyboard shortcut, use action "hotkey" and provide the keys (e.g. ["win"], ["enter"]).
         If the command implies scrolling, use action "scroll" and provide amount (positive for up, negative for down).
+        If the command asks to open an application or program, use action "open_app" and provide the "app_name".
         If the user asks a general question, just reply with text.
-        To open an app on Windows, you must return a list of actions: hotkey "win", then type the app name, then hotkey "enter".
         Respond with a JSON ARRAY of action objects ONLY, for example:
         [
             {{
-                "action": "click" | "highlight" | "reply" | "type" | "scroll" | "hotkey",
+                "action": "click" | "highlight" | "reply" | "type" | "scroll" | "hotkey" | "open_app",
                 "box_2d": [ymin, xmin, ymax, xmax],
                 "text": "Your reply or text to type",
                 "amount": 500,
-                "keys": ["win", "d"]
+                "keys": ["win", "d"],
+                "app_name": "camera"
             }}
         ]
         """
@@ -299,6 +314,19 @@ class BreezeAgent:
                     self.action_count += 1
                     amount = result.get("amount", -500)
                     pyautogui.scroll(amount)
+                    
+                elif action == "open_app" and "app_name" in result:
+                    if self.action_count >= 3:
+                        self.ui.show_error("Action limit reached! Please confirm before continuing.")
+                        break
+                    self.action_count += 1
+                    app_name = result["app_name"]
+                    import time
+                    pyautogui.hotkey("win")
+                    time.sleep(0.5)
+                    pyautogui.typewrite(app_name, interval=0.05)
+                    time.sleep(0.5)
+                    pyautogui.hotkey("enter")
                 
         except Exception as e:
             print(f"Error falling back to Ollama: {e}")
