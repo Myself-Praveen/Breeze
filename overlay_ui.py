@@ -1,7 +1,7 @@
 import sys
 import ctypes
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QApplication, QLabel
-from PyQt6.QtCore import Qt, QRect, QTimer
+from PyQt6.QtCore import Qt, QRect, QTimer, QPropertyAnimation, QEasingCurve
 from PyQt6.QtGui import QPainter, QPen, QColor
 import threading
 
@@ -121,7 +121,18 @@ class ChatWindow(QWidget):
         height = 60
         x = (screen.width() - width) // 2
         y = screen.height() - height - 40
-        self.setGeometry(x, y, width, height)
+        final_geom = QRect(x, y, width, height)
+        self.animate_show(final_geom)
+
+    def animate_show(self, final_geom):
+        start_geom = QRect(final_geom.x(), final_geom.y() + 100, final_geom.width(), final_geom.height())
+        self.setGeometry(start_geom)
+        self.anim = QPropertyAnimation(self, b"geometry")
+        self.anim.setDuration(600)
+        self.anim.setStartValue(start_geom)
+        self.anim.setEndValue(final_geom)
+        self.anim.setEasingCurve(QEasingCurve.Type.OutBack)
+        self.anim.start()
 
     def on_submit(self):
         text = self.input_field.text().strip()
