@@ -61,26 +61,40 @@ class BreezeAgent:
             return img_path
 
     def process_command(self, command):
+        print("process_command started")
         if not self.client:
+            print("No Gemini Client found")
             self.ui.show_error("GEMINI_API_KEY not found in Keyring!")
             self.speak("API Key not found.")
             return
 
-        img_path = self.capture_screen()
-        img = Image.open(img_path)
+        print("Capturing screen...")
+        try:
+            img_path = self.capture_screen()
+            img = Image.open(img_path)
+            print(f"Screen captured: {img_path}")
+        except Exception as e:
+            print(f"Error capturing screen: {e}")
+            self.ui.show_error(f"Screen capture failed: {e}")
+            return
 
         # Local OCR pass for fast simple clicks
         if command.lower().startswith("click"):
+            print("Running local OCR pass...")
             target_text = command[5:].strip().lower()
             try:
                 ocr_data = pytesseract.image_to_data(img, output_type=pytesseract.Output.DICT)
                 for i, word in enumerate(ocr_data['text']):
                     if word.strip().lower() == target_text:
+                        print("OCR Match found, clicking!")
                         x, y, w, h = ocr_data['left'][i], ocr_data['top'][i], ocr_data['width'][i], ocr_data['height'][i]
                         pyautogui.click(x + w//2, y + h//2)
                         return
+                print("OCR pass found no match, falling back to Gemini.")
             except Exception as e:
                 print("OCR unavailable or failed:", e)
+
+        print("Preparing Gemini prompt...")
 
         prompt = f"""
         You are Breeze, an AI desktop assistant. The user has given this command: "{command}".
