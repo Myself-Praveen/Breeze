@@ -1,8 +1,11 @@
 import sys
+import ctypes
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QApplication, QLabel
 from PyQt6.QtCore import Qt, QRect, QTimer
 from PyQt6.QtGui import QPainter, QPen, QColor
 import threading
+
+WDA_EXCLUDEFROMCAPTURE = 0x00000011
 
 class BoundingBoxOverlay(QWidget):
     def __init__(self):
@@ -14,6 +17,10 @@ class BoundingBoxOverlay(QWidget):
             Qt.WindowType.WindowTransparentForInput
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        
+        # Make the window invisible to screen capture
+        hwnd = int(self.winId())
+        ctypes.windll.user32.SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE)
         
         # Get screen geometry
         screen = QApplication.primaryScreen().geometry()
@@ -48,6 +55,10 @@ class ChatWindow(QWidget):
             Qt.WindowType.Tool
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+        
+        # Make the window invisible to screen capture
+        hwnd = int(self.winId())
+        ctypes.windll.user32.SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE)
         
         self.initUI()
         
