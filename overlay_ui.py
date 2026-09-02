@@ -46,10 +46,11 @@ class BoundingBoxOverlay(QWidget):
             painter.drawRect(box)
 
 class ChatWindow(QWidget):
-    def __init__(self, agent_callback=None, voice_callback=None):
+    def __init__(self, agent_callback=None, voice_callback=None, stop_tts_callback=None):
         super().__init__()
         self.agent_callback = agent_callback
         self.voice_callback = voice_callback
+        self.stop_tts_callback = stop_tts_callback
         
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint |
@@ -66,6 +67,11 @@ class ChatWindow(QWidget):
         
         self.overlay = BoundingBoxOverlay()
         self.overlay.show()
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key.Key_Escape and self.stop_tts_callback:
+            self.stop_tts_callback()
+        super().keyPressEvent(event)
 
     def initUI(self):
         layout = QVBoxLayout()

@@ -18,6 +18,7 @@ def main():
     # Connect callbacks
     window.agent_callback = agent.process_command
     window.voice_callback = agent.handle_voice_command
+    window.stop_tts_callback = agent.stop_speaking
     
     window.show()
     

@@ -5,15 +5,21 @@ import speech_recognition as sr
 import pyttsx3
 import json
 from PIL import Image
+import multiprocessing
 import keyring
 from google import genai
 from google.genai import types
 
+def _tts_worker(text):
+    import pyttsx3
+    engine = pyttsx3.init()
+    engine.say(text)
+    engine.runAndWait()
+
 class BreezeAgent:
     def __init__(self, ui_window):
         self.ui = ui_window
-        # Initialize TTS
-        self.tts_engine = pyttsx3.init()
+        self.tts_process = None
         # Initialize Gemini Client
         self.api_key = keyring.get_password("Breeze", "GEMINI_API_KEY")
         if self.api_key:
@@ -22,8 +28,14 @@ class BreezeAgent:
             self.client = None
 
     def speak(self, text):
-        self.tts_engine.say(text)
-        self.tts_engine.runAndWait()
+        self.stop_speaking()
+        self.tts_process = multiprocessing.Process(target=_tts_worker, args=(text,))
+        self.tts_process.start()
+
+    def stop_speaking(self):
+        if self.tts_process and self.tts_process.is_alive():
+            self.tts_process.terminate()
+            self.tts_process.join()
 
     def listen(self):
         recognizer = sr.Recognizer()
