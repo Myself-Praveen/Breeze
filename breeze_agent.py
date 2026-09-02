@@ -106,15 +106,20 @@ class BreezeAgent:
         If the command implies finding an element to click or highlight, provide the bounding box in the format:
         [ymin, xmin, ymax, xmax] where values are between 0 and 1000.
         If the command implies typing text, use action "type" and provide the text.
+        If the command implies pressing a keyboard shortcut, use action "hotkey" and provide the keys (e.g. ["win"], ["enter"]).
         If the command implies scrolling, use action "scroll" and provide amount (positive for up, negative for down).
         If the user asks a general question, just reply with text.
-        Respond with a JSON object containing:
-        {{
-            "action": "click" | "highlight" | "reply" | "type" | "scroll",
-            "box_2d": [ymin, xmin, ymax, xmax],
-            "text": "Your reply or text to type",
-            "amount": 500
-        }}
+        To open an app on Windows, you must return a list of actions: hotkey "win", then type the app name, then hotkey "enter".
+        Respond with a JSON ARRAY of action objects ONLY, for example:
+        [
+            {{
+                "action": "click" | "highlight" | "reply" | "type" | "scroll" | "hotkey",
+                "box_2d": [ymin, xmin, ymax, xmax],
+                "text": "Your reply or text to type",
+                "amount": 500,
+                "keys": ["win", "d"]
+            }}
+        ]
         """
         
         try:
@@ -125,54 +130,67 @@ class BreezeAgent:
                     response_mime_type="application/json",
                 ),
             )
-
             
-            result = json.loads(response.text)
-            print("AI Response:", result)
+            results = json.loads(response.text)
+            print("AI Response:", results)
             
-            action = result.get("action")
-            text = result.get("text", "")
-            
-            if action == "reply" and text:
-                self.speak(text)
+            if not isinstance(results, list):
+                results = [results]
                 
-            if action in ["click", "highlight"] and "box_2d" in result:
-                box = result["box_2d"]
-                # Convert 0-1000 scale to screen coordinates
-                screen_width, screen_height = pyautogui.size()
-                ymin, xmin, ymax, xmax = box
-                x = int((xmin / 1000) * screen_width)
-                y = int((ymin / 1000) * screen_height)
-                w = int(((xmax - xmin) / 1000) * screen_width)
-                h = int(((ymax - ymin) / 1000) * screen_height)
+            for result in results:
+                action = result.get("action")
+                text = result.get("text", "")
                 
-                if action == "highlight":
-                    self.ui.draw_highlight(x, y, w, h)
-                elif action == "click":
+                if action == "reply" and text:
+                    self.speak(text)
+                    
+                if action in ["click", "highlight"] and "box_2d" in result:
+                    box = result["box_2d"]
+                    # Convert 0-1000 scale to screen coordinates
+                    screen_width, screen_height = pyautogui.size()
+                    ymin, xmin, ymax, xmax = box
+                    x = int((xmin / 1000) * screen_width)
+                    y = int((ymin / 1000) * screen_height)
+                    w = int(((xmax - xmin) / 1000) * screen_width)
+                    h = int(((ymax - ymin) / 1000) * screen_height)
+                    
+                    if action == "highlight":
+                        self.ui.draw_highlight(x, y, w, h)
+                    elif action == "click":
+                        if self.action_count >= 3:
+                            self.ui.show_error("Action limit reached! Please confirm before continuing.")
+                            break
+                        self.action_count += 1
+                        cx = x + w // 2
+                        cy = y + h // 2
+                        pyautogui.click(cx, cy)
+                
+                elif action == "type" and text:
                     if self.action_count >= 3:
                         self.ui.show_error("Action limit reached! Please confirm before continuing.")
-                        return
+                        break
                     self.action_count += 1
-                    
-                    # Center of the box
-                    cx = x + w // 2
-                    cy = y + h // 2
-                    pyautogui.click(cx, cy)
-            
-            elif action == "type" and text:
-                if self.action_count >= 3:
-                    self.ui.show_error("Action limit reached! Please confirm before continuing.")
-                    return
-                self.action_count += 1
-                pyautogui.typewrite(text, interval=0.05)
-            
-            elif action == "scroll":
-                if self.action_count >= 3:
-                    self.ui.show_error("Action limit reached! Please confirm before continuing.")
-                    return
-                self.action_count += 1
-                amount = result.get("amount", -500)
-                pyautogui.scroll(amount)
+                    import time
+                    time.sleep(0.5) # small delay before typing
+                    pyautogui.typewrite(text, interval=0.05)
+                
+                elif action == "hotkey" and "keys" in result:
+                    if self.action_count >= 3:
+                        self.ui.show_error("Action limit reached! Please confirm before continuing.")
+                        break
+                    self.action_count += 1
+                    import time
+                    time.sleep(0.5)
+                    pyautogui.hotkey(*result["keys"])
+                
+                elif action == "scroll":
+                    if self.action_count >= 3:
+                        self.ui.show_error("Action limit reached! Please confirm before continuing.")
+                        break
+                    self.action_count += 1
+                    amount = result.get("amount", -500)
+                    pyautogui.scroll(amount)
+
                 
         except Exception as e:
             print(f"Error calling Gemini: {e}")
@@ -188,15 +206,20 @@ class BreezeAgent:
         If the command implies finding an element to click or highlight, provide the bounding box in the format:
         [ymin, xmin, ymax, xmax] where values are between 0 and 1000.
         If the command implies typing text, use action "type" and provide the text.
+        If the command implies pressing a keyboard shortcut, use action "hotkey" and provide the keys (e.g. ["win"], ["enter"]).
         If the command implies scrolling, use action "scroll" and provide amount (positive for up, negative for down).
         If the user asks a general question, just reply with text.
-        Respond with a JSON object ONLY containing:
-        {{
-            "action": "click" | "highlight" | "reply" | "type" | "scroll",
-            "box_2d": [ymin, xmin, ymax, xmax],
-            "text": "Your reply or text to type",
-            "amount": 500
-        }}
+        To open an app on Windows, you must return a list of actions: hotkey "win", then type the app name, then hotkey "enter".
+        Respond with a JSON ARRAY of action objects ONLY, for example:
+        [
+            {{
+                "action": "click" | "highlight" | "reply" | "type" | "scroll" | "hotkey",
+                "box_2d": [ymin, xmin, ymax, xmax],
+                "text": "Your reply or text to type",
+                "amount": 500,
+                "keys": ["win", "d"]
+            }}
+        ]
         """
         
         try:
@@ -215,52 +238,67 @@ class BreezeAgent:
             response.raise_for_status()
             data = response.json()
             
-            result = json.loads(data.get("response", "{}"))
-            print("Ollama Response:", result)
+            results = json.loads(data.get("response", "{}"))
+            print("Ollama Response:", results)
             
-            action = result.get("action")
-            text = result.get("text", "")
-            
-            if action == "reply" and text:
-                self.speak(text)
+            if not isinstance(results, list):
+                results = [results]
                 
-            if action in ["click", "highlight"] and "box_2d" in result:
-                box = result["box_2d"]
-                # Convert 0-1000 scale to screen coordinates
-                screen_width, screen_height = pyautogui.size()
-                ymin, xmin, ymax, xmax = box
-                x = int((xmin / 1000) * screen_width)
-                y = int((ymin / 1000) * screen_height)
-                w = int(((xmax - xmin) / 1000) * screen_width)
-                h = int(((ymax - ymin) / 1000) * screen_height)
+            for result in results:
+                action = result.get("action")
+                text = result.get("text", "")
                 
-                if action == "highlight":
-                    self.ui.draw_highlight(x, y, w, h)
-                elif action == "click":
+                if action == "reply" and text:
+                    self.speak(text)
+                    
+                if action in ["click", "highlight"] and "box_2d" in result:
+                    box = result["box_2d"]
+                    # Convert 0-1000 scale to screen coordinates
+                    screen_width, screen_height = pyautogui.size()
+                    ymin, xmin, ymax, xmax = box
+                    x = int((xmin / 1000) * screen_width)
+                    y = int((ymin / 1000) * screen_height)
+                    w = int(((xmax - xmin) / 1000) * screen_width)
+                    h = int(((ymax - ymin) / 1000) * screen_height)
+                    
+                    if action == "highlight":
+                        self.ui.draw_highlight(x, y, w, h)
+                    elif action == "click":
+                        if self.action_count >= 3:
+                            self.ui.show_error("Action limit reached! Please confirm before continuing.")
+                            break
+                        self.action_count += 1
+                        
+                        # Center of the box
+                        cx = x + w // 2
+                        cy = y + h // 2
+                        pyautogui.click(cx, cy)
+                
+                elif action == "type" and text:
                     if self.action_count >= 3:
                         self.ui.show_error("Action limit reached! Please confirm before continuing.")
-                        return
+                        break
                     self.action_count += 1
-                    
-                    # Center of the box
-                    cx = x + w // 2
-                    cy = y + h // 2
-                    pyautogui.click(cx, cy)
-            
-            elif action == "type" and text:
-                if self.action_count >= 3:
-                    self.ui.show_error("Action limit reached! Please confirm before continuing.")
-                    return
-                self.action_count += 1
-                pyautogui.typewrite(text, interval=0.05)
-            
-            elif action == "scroll":
-                if self.action_count >= 3:
-                    self.ui.show_error("Action limit reached! Please confirm before continuing.")
-                    return
-                self.action_count += 1
-                amount = result.get("amount", -500)
-                pyautogui.scroll(amount)
+                    import time
+                    time.sleep(0.5)
+                    pyautogui.typewrite(text, interval=0.05)
+                
+                elif action == "hotkey" and "keys" in result:
+                    if self.action_count >= 3:
+                        self.ui.show_error("Action limit reached! Please confirm before continuing.")
+                        break
+                    self.action_count += 1
+                    import time
+                    time.sleep(0.5)
+                    pyautogui.hotkey(*result["keys"])
+                
+                elif action == "scroll":
+                    if self.action_count >= 3:
+                        self.ui.show_error("Action limit reached! Please confirm before continuing.")
+                        break
+                    self.action_count += 1
+                    amount = result.get("amount", -500)
+                    pyautogui.scroll(amount)
                 
         except Exception as e:
             print(f"Error falling back to Ollama: {e}")
