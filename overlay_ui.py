@@ -142,18 +142,44 @@ class ChatWindow(QWidget):
             # Run in a separate thread so UI doesn't freeze
             threading.Thread(target=self.run_agent, args=(text,), daemon=True).start()
 
+    def set_listening_state(self, is_listening):
+        if is_listening:
+            self.voice_btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #dc3545;
+                    color: white;
+                    border-radius: 20px;
+                    font-size: 18px;
+                }
+            """)
+            self.input_field.setPlaceholderText("Listening...")
+        else:
+            self.voice_btn.setStyleSheet("""
+                QPushButton {
+                    background-color: #007BFF;
+                    color: white;
+                    border-radius: 20px;
+                    font-size: 18px;
+                }
+                QPushButton:hover {
+                    background-color: #0056b3;
+                }
+            """)
+            self.input_field.setPlaceholderText("Ask Breeze to do something...")
+
     def on_voice(self):
         if self.voice_callback:
-            self.input_field.setPlaceholderText("Listening...")
+            self.set_listening_state(True)
             threading.Thread(target=self.run_voice, daemon=True).start()
 
     def run_agent(self, text):
         self.agent_callback(text)
-        # We need a signal/slot to update placeholder from thread, but keeping it simple for now
-        # Will handle UI updates properly later.
         
     def run_voice(self):
         self.voice_callback()
+        # Reset state after recording (needs main thread UI update, but simpler here)
+        self.set_listening_state(False)
+
 
     def draw_highlight(self, x, y, w, h):
         self.overlay.set_boxes([QRect(x, y, w, h)])
