@@ -1,7 +1,7 @@
 import sys
 import ctypes
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QApplication, QLabel
-from PyQt6.QtCore import Qt, QRect, QTimer, QPropertyAnimation, QEasingCurve
+from PyQt6.QtCore import Qt, QRect, QTimer, QPropertyAnimation, QEasingCurve, pyqtSignal
 from PyQt6.QtGui import QPainter, QPen, QColor
 import threading
 
@@ -46,11 +46,17 @@ class BoundingBoxOverlay(QWidget):
             painter.drawRect(box)
 
 class ChatWindow(QWidget):
+    error_signal = pyqtSignal(str)
+    highlight_signal = pyqtSignal(int, int, int, int)
+
     def __init__(self, agent_callback=None, voice_callback=None, stop_tts_callback=None):
         super().__init__()
         self.agent_callback = agent_callback
         self.voice_callback = voice_callback
         self.stop_tts_callback = stop_tts_callback
+        
+        self.error_signal.connect(self._show_error_slot)
+        self.highlight_signal.connect(self._draw_highlight_slot)
         
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint |
@@ -58,6 +64,7 @@ class ChatWindow(QWidget):
             Qt.WindowType.Tool
         )
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
+
         
         # Make the window invisible to screen capture
         hwnd = int(self.winId())
@@ -188,11 +195,17 @@ class ChatWindow(QWidget):
 
 
     def draw_highlight(self, x, y, w, h):
+        self.highlight_signal.emit(x, y, w, h)
+
+    def _draw_highlight_slot(self, x, y, w, h):
         self.overlay.set_boxes([QRect(x, y, w, h)])
         # Hide after 5 seconds
         QTimer.singleShot(5000, lambda: self.overlay.set_boxes([]))
 
     def show_error(self, msg):
+        self.error_signal.emit(msg)
+
+    def _show_error_slot(self, msg):
         self.input_field.setText("")
         self.input_field.setPlaceholderText(f"Error: {msg}")
         QTimer.singleShot(3000, lambda: self.input_field.setPlaceholderText("Ask Breeze to do something..."))
