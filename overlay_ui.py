@@ -22,9 +22,11 @@ class BoundingBoxOverlay(QWidget):
         hwnd = int(self.winId())
         ctypes.windll.user32.SetWindowDisplayAffinity(hwnd, WDA_EXCLUDEFROMCAPTURE)
         
-        # Get screen geometry
-        screen = QApplication.primaryScreen().geometry()
-        self.setGeometry(screen)
+        # Get screen geometry covering all monitors
+        rect = QRect()
+        for screen in QApplication.screens():
+            rect = rect.united(screen.geometry())
+        self.setGeometry(rect)
         
         self.boxes = [] # List of QRect to draw
 
