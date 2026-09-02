@@ -34,7 +34,7 @@ class BreezeAgent:
                 text = recognizer.recognize_google(audio)
                 return text
             except Exception as e:
-                print("Error recording voice:", e)
+                self.ui.show_error(f"Voice recording failed: {e}")
                 return ""
 
     def capture_screen(self):
@@ -48,7 +48,7 @@ class BreezeAgent:
 
     def process_command(self, command):
         if not self.client:
-            print("GEMINI_API_KEY not set!")
+            self.ui.show_error("GEMINI_API_KEY not found in Keyring!")
             self.speak("API Key not found.")
             return
 
@@ -106,7 +106,8 @@ class BreezeAgent:
                     pyautogui.click(cx, cy)
                     
         except Exception as e:
-            print("Error processing command:", e)
+            self.ui.show_error(f"Error processing command: {e}")
+
 
     def handle_voice_command(self):
         command = self.listen()

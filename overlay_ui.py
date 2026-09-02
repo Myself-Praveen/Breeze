@@ -185,3 +185,9 @@ class ChatWindow(QWidget):
         self.overlay.set_boxes([QRect(x, y, w, h)])
         # Hide after 5 seconds
         QTimer.singleShot(5000, lambda: self.overlay.set_boxes([]))
+
+    def show_error(self, msg):
+        self.input_field.setText("")
+        self.input_field.setPlaceholderText(f"Error: {msg}")
+        QTimer.singleShot(3000, lambda: self.input_field.setPlaceholderText("Ask Breeze to do something..."))
+
