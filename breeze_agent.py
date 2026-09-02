@@ -9,6 +9,7 @@ import multiprocessing
 import keyring
 from google import genai
 from google.genai import types
+import pytesseract
 
 def _tts_worker(text):
     import pyttsx3
@@ -66,6 +67,19 @@ class BreezeAgent:
 
         img_path = self.capture_screen()
         img = Image.open(img_path)
+
+        # Local OCR pass for fast simple clicks
+        if command.lower().startswith("click"):
+            target_text = command[5:].strip().lower()
+            try:
+                ocr_data = pytesseract.image_to_data(img, output_type=pytesseract.Output.DICT)
+                for i, word in enumerate(ocr_data['text']):
+                    if word.strip().lower() == target_text:
+                        x, y, w, h = ocr_data['left'][i], ocr_data['top'][i], ocr_data['width'][i], ocr_data['height'][i]
+                        pyautogui.click(x + w//2, y + h//2)
+                        return
+            except Exception as e:
+                print("OCR unavailable or failed:", e)
 
         prompt = f"""
         You are Breeze, an AI desktop assistant. The user has given this command: "{command}".
