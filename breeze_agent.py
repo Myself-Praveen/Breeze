@@ -5,8 +5,10 @@ import speech_recognition as sr
 import pyttsx3
 import json
 from PIL import Image
+import PIL.PngImagePlugin
 import multiprocessing
 import keyring
+
 from google import genai
 from google.genai import types
 import pytesseract
@@ -115,12 +117,13 @@ class BreezeAgent:
         
         try:
             response = self.client.models.generate_content(
-                model='gemini-2.5-pro',
+                model='gemini-3.1-pro-preview',
                 contents=[img, prompt],
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
                 ),
             )
+
             
             result = json.loads(response.text)
             print("AI Response:", result)
@@ -170,7 +173,9 @@ class BreezeAgent:
                 pyautogui.scroll(amount)
                 
         except Exception as e:
+            print(f"Error processing command: {e}")
             self.ui.show_error(f"Error processing command: {e}")
+
 
     def reset_action_limit(self):
         self.action_count = 0
