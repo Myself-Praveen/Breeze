@@ -21,6 +21,7 @@ class BreezeAgent:
     def __init__(self, ui_window):
         self.ui = ui_window
         self.tts_process = None
+        self.action_count = 0
         # Initialize Gemini Client
         self.api_key = keyring.get_password("Breeze", "GEMINI_API_KEY")
         if self.api_key:
@@ -129,20 +130,37 @@ class BreezeAgent:
                 if action == "highlight":
                     self.ui.draw_highlight(x, y, w, h)
                 elif action == "click":
+                    if self.action_count >= 3:
+                        self.ui.show_error("Action limit reached! Please confirm before continuing.")
+                        return
+                    self.action_count += 1
+                    
                     # Center of the box
                     cx = x + w // 2
                     cy = y + h // 2
                     pyautogui.click(cx, cy)
             
             elif action == "type" and text:
+                if self.action_count >= 3:
+                    self.ui.show_error("Action limit reached! Please confirm before continuing.")
+                    return
+                self.action_count += 1
                 pyautogui.typewrite(text, interval=0.05)
             
             elif action == "scroll":
+                if self.action_count >= 3:
+                    self.ui.show_error("Action limit reached! Please confirm before continuing.")
+                    return
+                self.action_count += 1
                 amount = result.get("amount", -500)
                 pyautogui.scroll(amount)
                 
         except Exception as e:
             self.ui.show_error(f"Error processing command: {e}")
+
+    def reset_action_limit(self):
+        self.action_count = 0
+
 
 
     def handle_voice_command(self):
