@@ -5,7 +5,7 @@ import speech_recognition as sr
 import pyttsx3
 import json
 from PIL import Image
-# google-genai integration
+import keyring
 from google import genai
 from google.genai import types
 
@@ -15,7 +15,7 @@ class BreezeAgent:
         # Initialize TTS
         self.tts_engine = pyttsx3.init()
         # Initialize Gemini Client
-        self.api_key = os.environ.get("GEMINI_API_KEY")
+        self.api_key = keyring.get_password("Breeze", "GEMINI_API_KEY")
         if self.api_key:
             self.client = genai.Client(api_key=self.api_key)
         else:
