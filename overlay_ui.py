@@ -48,6 +48,7 @@ class BoundingBoxOverlay(QWidget):
 class ChatWindow(QWidget):
     error_signal = pyqtSignal(str)
     highlight_signal = pyqtSignal(int, int, int, int)
+    listening_signal = pyqtSignal(bool)
 
     def __init__(self, agent_callback=None, voice_callback=None, stop_tts_callback=None):
         super().__init__()
@@ -57,6 +58,7 @@ class ChatWindow(QWidget):
         
         self.error_signal.connect(self._show_error_slot)
         self.highlight_signal.connect(self._draw_highlight_slot)
+        self.listening_signal.connect(self._set_listening_state_slot)
         
         self.setWindowFlags(
             Qt.WindowType.FramelessWindowHint |
@@ -156,6 +158,9 @@ class ChatWindow(QWidget):
             threading.Thread(target=self.run_agent, args=(text,), daemon=True).start()
 
     def set_listening_state(self, is_listening):
+        self.listening_signal.emit(is_listening)
+
+    def _set_listening_state_slot(self, is_listening):
         if is_listening:
             self.voice_btn.setStyleSheet("""
                 QPushButton {
@@ -179,6 +184,7 @@ class ChatWindow(QWidget):
                 }
             """)
             self.input_field.setPlaceholderText("Ask Breeze to do something...")
+
 
     def on_voice(self):
         if self.voice_callback:
