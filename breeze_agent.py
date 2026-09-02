@@ -72,12 +72,15 @@ class BreezeAgent:
         You have a screenshot of the user's screen.
         If the command implies finding an element to click or highlight, provide the bounding box in the format:
         [ymin, xmin, ymax, xmax] where values are between 0 and 1000.
+        If the command implies typing text, use action "type" and provide the text.
+        If the command implies scrolling, use action "scroll" and provide amount (positive for up, negative for down).
         If the user asks a general question, just reply with text.
         Respond with a JSON object containing:
         {{
-            "action": "click" | "highlight" | "reply",
+            "action": "click" | "highlight" | "reply" | "type" | "scroll",
             "box_2d": [ymin, xmin, ymax, xmax],
-            "text": "Your reply or explanation"
+            "text": "Your reply or text to type",
+            "amount": 500
         }}
         """
         
@@ -96,7 +99,7 @@ class BreezeAgent:
             action = result.get("action")
             text = result.get("text", "")
             
-            if text:
+            if action == "reply" and text:
                 self.speak(text)
                 
             if action in ["click", "highlight"] and "box_2d" in result:
@@ -116,7 +119,14 @@ class BreezeAgent:
                     cx = x + w // 2
                     cy = y + h // 2
                     pyautogui.click(cx, cy)
-                    
+            
+            elif action == "type" and text:
+                pyautogui.typewrite(text, interval=0.05)
+            
+            elif action == "scroll":
+                amount = result.get("amount", -500)
+                pyautogui.scroll(amount)
+                
         except Exception as e:
             self.ui.show_error(f"Error processing command: {e}")
 
