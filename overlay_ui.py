@@ -118,7 +118,7 @@ class ChatWindow(QWidget):
         """)
         self.input_field.returnPressed.connect(self.on_submit)
         
-        self.voice_btn = QPushButton("🎤")
+        self.voice_btn = QPushButton("🎙")
         self.voice_btn.setFixedSize(40, 40)
         self.voice_btn.setStyleSheet("""
             QPushButton {
@@ -193,6 +193,7 @@ class ChatWindow(QWidget):
 
     def _set_listening_state_slot(self, is_listening):
         if is_listening:
+            self.voice_btn.setText("ılı")
             self.voice_btn.setStyleSheet("""
                 QPushButton {
                     background-color: rgba(255, 50, 100, 40);
@@ -204,6 +205,7 @@ class ChatWindow(QWidget):
             """)
             self.input_field.setPlaceholderText("Listening...")
         else:
+            self.voice_btn.setText("🎙")
             self.voice_btn.setStyleSheet("""
                 QPushButton {
                     background-color: rgba(255, 255, 255, 10);
