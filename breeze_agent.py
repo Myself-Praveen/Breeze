@@ -16,10 +16,33 @@ from google.genai import types
 import pytesseract
 
 def _tts_worker(text):
-    import pyttsx3
-    engine = pyttsx3.init()
-    engine.say(text)
-    engine.runAndWait()
+    import asyncio
+    import edge_tts
+    import os
+    os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = "hide"
+    import pygame
+    
+    # Use a high-quality Indian English voice
+    voice = "en-IN-NeerjaNeural"
+    output_file = "temp_speech.mp3"
+    
+    async def generate():
+        communicate = edge_tts.Communicate(text, voice)
+        await communicate.save(output_file)
+        
+    asyncio.run(generate())
+    
+    # Play MP3 in the worker process
+    pygame.mixer.init()
+    pygame.mixer.music.load(output_file)
+    pygame.mixer.music.play()
+    while pygame.mixer.music.get_busy():
+        pygame.time.Clock().tick(10)
+    pygame.mixer.quit()
+    try:
+        os.remove(output_file)
+    except:
+        pass
 
 class BreezeAgent:
     def __init__(self, ui_window):
