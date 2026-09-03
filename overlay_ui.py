@@ -2,7 +2,7 @@ import sys
 import ctypes
 from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QApplication, QLabel, QGraphicsDropShadowEffect
 from PyQt6.QtCore import Qt, QRect, QTimer, QPropertyAnimation, QEasingCurve, pyqtSignal
-from PyQt6.QtGui import QPainter, QPen, QColor
+from PyQt6.QtGui import QPainter, QPen, QColor, QPainterPath
 import threading
 
 WDA_EXCLUDEFROMCAPTURE = 0x00000011
@@ -44,6 +44,61 @@ class BoundingBoxOverlay(QWidget):
         
         for box in self.boxes:
             painter.drawRect(box)
+
+
+class VoiceButton(QPushButton):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setFixedSize(40, 40)
+        self.is_listening = False
+        self.setCursor(Qt.CursorShape.PointingHandCursor)
+        
+    def paintEvent(self, event):
+        painter = QPainter(self)
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+        
+        # Draw background
+        if self.is_listening:
+            painter.setBrush(QColor(50, 120, 240)) # ChatGPT blue
+            painter.setPen(Qt.PenStyle.NoPen)
+        else:
+            if self.underMouse():
+                painter.setBrush(QColor(255, 255, 255, 30))
+            else:
+                painter.setBrush(QColor(255, 255, 255, 10))
+            painter.setPen(QPen(QColor(255, 255, 255, 30), 1))
+            
+        # Draw circle
+        painter.drawEllipse(1, 1, 38, 38)
+        
+        # Setup pen for icons
+        painter.setPen(QPen(Qt.GlobalColor.white, 2.5, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin))
+        
+        cx, cy = 20, 20
+        
+        if self.is_listening:
+            # Draw Audio Waveform (5 bars)
+            painter.drawLine(cx, cy - 8, cx, cy + 8)         # Center
+            painter.drawLine(cx - 5, cy - 4, cx - 5, cy + 4) # Inner left
+            painter.drawLine(cx + 5, cy - 4, cx + 5, cy + 4) # Inner right
+            painter.drawLine(cx - 10, cy - 2, cx - 10, cy + 2) # Outer left
+            painter.drawLine(cx + 10, cy - 2, cx + 10, cy + 2) # Outer right
+        else:
+            # Draw Microphone
+            # Capsule
+            painter.drawRoundedRect(int(cx - 3.5), int(cy - 8), 7, 11, 3.5, 3.5)
+            # Arc
+            painter.drawArc(cx - 8, cy - 4, 16, 12, 180 * 16, 180 * 16)
+            # Stand
+            painter.drawLine(cx, cy + 8, cx, cy + 12)
+            
+    def enterEvent(self, event):
+        self.update()
+        super().enterEvent(event)
+        
+    def leaveEvent(self, event):
+        self.update()
+        super().leaveEvent(event)
 
 class ChatWindow(QWidget):
     error_signal = pyqtSignal(str)
@@ -118,22 +173,7 @@ class ChatWindow(QWidget):
         """)
         self.input_field.returnPressed.connect(self.on_submit)
         
-        self.voice_btn = QPushButton("🎙")
-        self.voice_btn.setFixedSize(40, 40)
-        self.voice_btn.setStyleSheet("""
-            QPushButton {
-                background-color: rgba(255, 255, 255, 10);
-                color: #e0e0e0;
-                border-radius: 20px;
-                font-size: 18px;
-                border: 1px solid rgba(255, 255, 255, 15);
-            }
-            QPushButton:hover {
-                background-color: rgba(0, 255, 255, 30);
-                color: #00FFFF;
-                border: 1px solid rgba(0, 255, 255, 50);
-            }
-        """)
+        self.voice_btn = VoiceButton()
         self.voice_btn.clicked.connect(self.on_voice)
         
         self.close_btn = QPushButton("✖")
@@ -192,34 +232,12 @@ class ChatWindow(QWidget):
         self.listening_signal.emit(is_listening)
 
     def _set_listening_state_slot(self, is_listening):
+        self.voice_btn.is_listening = is_listening
+        self.voice_btn.update()
+        
         if is_listening:
-            self.voice_btn.setText("ılı")
-            self.voice_btn.setStyleSheet("""
-                QPushButton {
-                    background-color: rgba(255, 50, 100, 40);
-                    color: #FF3366;
-                    border-radius: 20px;
-                    font-size: 18px;
-                    border: 1px solid rgba(255, 50, 100, 80);
-                }
-            """)
             self.input_field.setPlaceholderText("Listening...")
         else:
-            self.voice_btn.setText("🎙")
-            self.voice_btn.setStyleSheet("""
-                QPushButton {
-                    background-color: rgba(255, 255, 255, 10);
-                    color: #e0e0e0;
-                    border-radius: 20px;
-                    font-size: 18px;
-                    border: 1px solid rgba(255, 255, 255, 15);
-                }
-                QPushButton:hover {
-                    background-color: rgba(0, 255, 255, 30);
-                    color: #00FFFF;
-                    border: 1px solid rgba(0, 255, 255, 50);
-                }
-            """)
             self.input_field.setPlaceholderText("Ask Breeze to do something...")
 
 
