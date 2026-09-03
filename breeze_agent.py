@@ -158,7 +158,7 @@ class BreezeAgent:
         If the command implies pressing a keyboard shortcut, use action "hotkey" and provide the "keys" (e.g. ["win"], ["enter"]).
         If the command implies scrolling, use action "scroll" and provide "amount" (positive for up, negative for down).
         If the command asks to open an application or program, use action "open_app" and provide the "app_name".
-        If the command asks to message someone on WhatsApp, use action "whatsapp" and provide the "contact" name and "text" to send.
+        If the command asks to message someone on WhatsApp, use action "whatsapp" and provide the "contact" name, "text" to send, and optionally a "count" (default 1).
         If the command asks to play a song on Spotify or YouTube, use action "play_spotify" or "play_youtube" and provide the "song" name.
         If the command asks to search the web, use action "search_web" and provide the "query".
         Respond with a JSON ARRAY of action objects ONLY, for example:
@@ -171,6 +171,7 @@ class BreezeAgent:
                 "keys": ["win", "d"],
                 "app_name": "camera",
                 "contact": "John",
+                "count": 5,
                 "song": "song_name",
                 "query": "search_query"
             }}
@@ -400,21 +401,28 @@ class BreezeAgent:
             self.action_count += 1
             contact = result["contact"]
             msg = result["text"]
+            count = result.get("count", 1)
             import time
             pyautogui.hotkey("win")
-            time.sleep(0.2)
+            time.sleep(0.5)
             pyautogui.typewrite("whatsapp", interval=0.01)
-            time.sleep(0.2)
+            time.sleep(0.5)
             pyautogui.hotkey("enter")
-            time.sleep(1.5)
+            time.sleep(2.5) # Wait for WhatsApp to open
+            
             pyautogui.hotkey("ctrl", "f")
             time.sleep(0.5)
             pyautogui.typewrite(contact, interval=0.01)
-            time.sleep(0.5)
-            pyautogui.hotkey("enter")
-            time.sleep(0.5)
-            pyautogui.typewrite(msg, interval=0.01)
+            time.sleep(1.0) # Wait for search results
+            # Tab to select the first result, then Enter
+            pyautogui.hotkey("tab")
             time.sleep(0.2)
             pyautogui.hotkey("enter")
+            time.sleep(1.0)
+            
+            for _ in range(count):
+                pyautogui.typewrite(msg, interval=0.01)
+                time.sleep(0.1)
+                pyautogui.hotkey("enter")
             
         return True
