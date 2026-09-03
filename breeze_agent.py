@@ -376,12 +376,12 @@ class BreezeAgent:
                 html = urllib.request.urlopen(f"https://www.youtube.com/results?search_query={query}")
                 video_ids = re.findall(r"watch\?v=(\S{11})", html.read().decode())
                 if video_ids:
-                    webbrowser.open(f"https://music.youtube.com/watch?v={video_ids[0]}")
+                    webbrowser.open(f"https://www.youtube.com/watch?v={video_ids[0]}")
                 else:
-                    webbrowser.open(f"https://music.youtube.com/search?q={query}")
+                    webbrowser.open(f"https://www.youtube.com/results?search_query={query}")
             except Exception as e:
                 print(f"Error fetching YT: {e}")
-                webbrowser.open(f"https://music.youtube.com/search?q={query}")
+                webbrowser.open(f"https://www.youtube.com/results?search_query={query}")
             
         elif action == "search_web" and "query" in result:
             if self.action_count >= 3:
