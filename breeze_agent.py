@@ -113,68 +113,76 @@ class BreezeAgent:
             self.ui.show_error(f"Screen capture failed: {e}")
             return
 
-        # Local OCR pass for fast simple clicks with Caching
-        if command.lower().startswith("click"):
+        # Global OCR pass (Build UI Map)
+        import time
+        current_time = time.time()
+        
+        if self.last_ocr_data and current_time - self.last_ocr_time < 5.0:
+            print("Using cached OCR UI Map...")
+            ocr_data = self.last_ocr_data
+        else:
+            print("Running local OCR pass (Cache miss)...")
+            try:
+                ocr_data = pytesseract.image_to_data(img, output_type=pytesseract.Output.DICT)
+                self.last_ocr_data = ocr_data
+                self.last_ocr_time = current_time
+            except Exception as e:
+                print("OCR unavailable or failed:", e)
+                ocr_data = None
+        
+        # Simple local click handler for exact matches (bypasses LLM entirely)
+        if command.lower().startswith("click") and ocr_data:
             target_text = command[5:].strip().lower()
-            import time
-            current_time = time.time()
+            found = False
+            for i, word in enumerate(ocr_data['text']):
+                if word.strip().lower() == target_text:
+                    print("OCR Exact Match found, clicking locally!")
+                    x, y, w, h = ocr_data['left'][i], ocr_data['top'][i], ocr_data['width'][i], ocr_data['height'][i]
+                    pyautogui.click(x + w//2, y + h//2)
+                    return
+            print("Local OCR exact match failed, falling back to LLM Semantic matching.")
             
-            # Use Cache if within 5 seconds
-            if self.last_ocr_data and current_time - self.last_ocr_time < 5.0:
-                print("Using cached OCR UI Map...")
-                ocr_data = self.last_ocr_data
-            else:
-                print("Running local OCR pass (Cache miss)...")
-                try:
-                    ocr_data = pytesseract.image_to_data(img, output_type=pytesseract.Output.DICT)
-                    self.last_ocr_data = ocr_data
-                    self.last_ocr_time = current_time
-                except Exception as e:
-                    print("OCR unavailable or failed:", e)
-                    ocr_data = None
+        # Extract visible text for the LLM
+        visible_text_list = []
+        if ocr_data:
+            visible_text_list = [w.strip() for w in ocr_data['text'] if w.strip()]
             
-            if ocr_data:
-                for i, word in enumerate(ocr_data['text']):
-                    if word.strip().lower() == target_text:
-                        print("OCR Match found, clicking!")
-                        x, y, w, h = ocr_data['left'][i], ocr_data['top'][i], ocr_data['width'][i], ocr_data['height'][i]
-                        pyautogui.click(x + w//2, y + h//2)
-                        return
-                print("OCR pass found no match, falling back to Gemini.")
-
-        print("Preparing Gemini prompt...")
-
+        print("Preparing Text-Only Prompt...")
+        
         prompt = f"""
         You are Breeze, an AI desktop assistant. The user has given this command: "{command}".
-        You have a screenshot of the user's screen.
-        If the command implies finding an element to click or highlight, provide the bounding box in the format:
-        [ymin, xmin, ymax, xmax] where values are between 0 and 1000.
-        If the command implies typing text, use action "type" and provide the text.
-        If the command implies pressing a keyboard shortcut, use action "hotkey" and provide the keys (e.g. ["win"], ["enter"]).
-        If the command implies scrolling, use action "scroll" and provide amount (positive for up, negative for down).
+        Here is a list of all visible text on the screen: {visible_text_list}
+        
+        If the command implies finding an element to click or highlight, DO NOT provide a bounding box. Instead, find the most logical text from the list above and provide it as "target_text".
+        If the command implies typing text, use action "type" and provide the "text".
+        If the command implies pressing a keyboard shortcut, use action "hotkey" and provide the "keys" (e.g. ["win"], ["enter"]).
+        If the command implies scrolling, use action "scroll" and provide "amount" (positive for up, negative for down).
         If the command asks to open an application or program, use action "open_app" and provide the "app_name".
         If the command asks to message someone on WhatsApp, use action "whatsapp" and provide the "contact" name and "text" to send.
-        If the command asks to play a song on Spotify, use action "play_spotify" and provide the "song" name.
+        If the command asks to play a song on Spotify or YouTube, use action "play_spotify" or "play_youtube" and provide the "song" name.
         If the command asks to search the web, use action "search_web" and provide the "query".
-        If the user asks a general question, just reply with text.
         Respond with a JSON ARRAY of action objects ONLY, for example:
         [
             {{
-                "action": "click" | "highlight" | "reply" | "type" | "scroll" | "hotkey" | "open_app" | "whatsapp" | "play_spotify" | "search_web",
-                "box_2d": [ymin, xmin, ymax, xmax],
+                "action": "click" | "highlight" | "reply" | "type" | "scroll" | "hotkey" | "open_app" | "whatsapp" | "play_spotify" | "play_youtube" | "search_web",
+                "target_text": "text_from_list",
                 "text": "Your reply or text to type",
                 "amount": 500,
                 "keys": ["win", "d"],
                 "app_name": "camera",
-                "contact": "John"
+                "contact": "John",
+                "song": "song_name",
+                "query": "search_query"
             }}
         ]
         """
         
         try:
+            # We can use Gemini's fast Text model (gemini-3.5-flash) which has huge free quotas, 
+            # or continue using gemini-3.1-pro-preview with just text since it's much cheaper!
             response = self.client.models.generate_content(
-                model='gemini-3.1-pro-preview',
-                contents=[img, prompt],
+                model='gemini-3.5-flash',
+                contents=[prompt],
                 config=types.GenerateContentConfig(
                     response_mime_type="application/json",
                 ),
@@ -191,47 +199,16 @@ class BreezeAgent:
                     break
         except Exception as e:
             print(f"Error calling Gemini: {e}")
-            self.fallback_to_ollama(command, img_path)
+            self.fallback_to_ollama(command, prompt)
 
-    def fallback_to_ollama(self, command, img_path):
-        print("Falling back to local Ollama (llava)...")
-        self.ui.show_error("Gemini API Error. Falling back to local Ollama...")
-        
-        prompt = f"""
-        You are Breeze, an AI desktop assistant. The user has given this command: "{command}".
-        You have a screenshot of the user's screen.
-        If the command implies finding an element to click or highlight, provide the bounding box in the format:
-        [ymin, xmin, ymax, xmax] where values are between 0 and 1000.
-        If the command implies typing text, use action "type" and provide the text.
-        If the command implies pressing a keyboard shortcut, use action "hotkey" and provide the keys (e.g. ["win"], ["enter"]).
-        If the command implies scrolling, use action "scroll" and provide amount (positive for up, negative for down).
-        If the command asks to open an application or program, use action "open_app" and provide the "app_name".
-        If the command asks to message someone on WhatsApp, use action "whatsapp" and provide the "contact" name and "text" to send.
-        If the command asks to play a song on Spotify, use action "play_spotify" and provide the "song" name.
-        If the command asks to search the web, use action "search_web" and provide the "query".
-        If the user asks a general question, just reply with text.
-        Respond with a JSON ARRAY of action objects ONLY, for example:
-        [
-            {{
-                "action": "click" | "highlight" | "reply" | "type" | "scroll" | "hotkey" | "open_app" | "whatsapp" | "play_spotify" | "search_web",
-                "box_2d": [ymin, xmin, ymax, xmax],
-                "text": "Your reply or text to type",
-                "amount": 500,
-                "keys": ["win", "d"],
-                "app_name": "camera",
-                "contact": "John"
-            }}
-        ]
-        """
+    def fallback_to_ollama(self, command, prompt):
+        print("Falling back to local Ollama (llama3 text model)...")
+        self.ui.show_error("Gemini API Error. Falling back to local Ollama Text model...")
         
         try:
-            with open(img_path, "rb") as image_file:
-                encoded_string = base64.b64encode(image_file.read()).decode('utf-8')
-                
             payload = {
-                "model": "llava",
+                "model": "llama3",
                 "prompt": prompt,
-                "images": [encoded_string],
                 "stream": False,
                 "format": "json"
             }
@@ -298,16 +275,27 @@ class BreezeAgent:
         if action == "reply" and text:
             self.speak(text)
             
-        if action in ["click", "highlight"] and "box_2d" in result:
-            box = result["box_2d"]
-            # Convert 0-1000 scale to screen coordinates
-            screen_width, screen_height = pyautogui.size()
-            ymin, xmin, ymax, xmax = box
-            x = int((xmin / 1000) * screen_width)
-            y = int((ymin / 1000) * screen_height)
-            w = int(((xmax - xmin) / 1000) * screen_width)
-            h = int(((ymax - ymin) / 1000) * screen_height)
-            
+        if action in ["click", "highlight"] and "target_text" in result:
+            target = result["target_text"].lower().strip()
+            ocr_data = self.last_ocr_data
+            if not ocr_data:
+                self.ui.show_error("No OCR map available for UI clicking.")
+                return False
+                
+            # Find the best match in OCR
+            found = False
+            for i, word in enumerate(ocr_data['text']):
+                if target in word.strip().lower() or word.strip().lower() in target:
+                    x, y, w, h = ocr_data['left'][i], ocr_data['top'][i], ocr_data['width'][i], ocr_data['height'][i]
+                    # Make sure the width/height are valid
+                    if w > 0 and h > 0:
+                        found = True
+                        break
+                        
+            if not found:
+                self.ui.show_error(f"Could not find '{target}' on screen.")
+                return False
+                
             if action == "highlight":
                 self.ui.draw_highlight(x, y, w, h)
             elif action == "click":
