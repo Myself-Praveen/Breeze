@@ -201,12 +201,12 @@ class ChatWindow(QWidget):
         layout.addWidget(self.container)
         self.setLayout(layout)
         
-        # Position at bottom center
-        screen = QApplication.primaryScreen().geometry()
+        # Position at bottom center above taskbar
+        screen = QApplication.primaryScreen().availableGeometry()
         width = 600
         height = 60
-        x = (screen.width() - width) // 2
-        y = screen.height() - height - 40
+        x = screen.x() + (screen.width() - width) // 2
+        y = screen.y() + screen.height() - height - 20
         final_geom = QRect(x, y, width, height)
         self.animate_show(final_geom)
 
