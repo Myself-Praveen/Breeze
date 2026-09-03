@@ -49,6 +49,8 @@ class BreezeAgent:
         self.ui = ui_window
         self.tts_process = None
         self.action_count = 0
+        self.last_ocr_data = None
+        self.last_ocr_time = 0
         # Initialize Gemini Client
         self.api_key = keyring.get_password("Breeze", "GEMINI_API_KEY")
         if self.api_key:
@@ -111,12 +113,27 @@ class BreezeAgent:
             self.ui.show_error(f"Screen capture failed: {e}")
             return
 
-        # Local OCR pass for fast simple clicks
+        # Local OCR pass for fast simple clicks with Caching
         if command.lower().startswith("click"):
-            print("Running local OCR pass...")
             target_text = command[5:].strip().lower()
-            try:
-                ocr_data = pytesseract.image_to_data(img, output_type=pytesseract.Output.DICT)
+            import time
+            current_time = time.time()
+            
+            # Use Cache if within 5 seconds
+            if self.last_ocr_data and current_time - self.last_ocr_time < 5.0:
+                print("Using cached OCR UI Map...")
+                ocr_data = self.last_ocr_data
+            else:
+                print("Running local OCR pass (Cache miss)...")
+                try:
+                    ocr_data = pytesseract.image_to_data(img, output_type=pytesseract.Output.DICT)
+                    self.last_ocr_data = ocr_data
+                    self.last_ocr_time = current_time
+                except Exception as e:
+                    print("OCR unavailable or failed:", e)
+                    ocr_data = None
+            
+            if ocr_data:
                 for i, word in enumerate(ocr_data['text']):
                     if word.strip().lower() == target_text:
                         print("OCR Match found, clicking!")
@@ -124,8 +141,6 @@ class BreezeAgent:
                         pyautogui.click(x + w//2, y + h//2)
                         return
                 print("OCR pass found no match, falling back to Gemini.")
-            except Exception as e:
-                print("OCR unavailable or failed:", e)
 
         print("Preparing Gemini prompt...")
 
