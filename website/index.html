@@ -4,26 +4,27 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Breeze | AI Desktop Assistant</title>
-    <meta name="description" content="Ask. Learn. Click. Done. The ultimate AI desktop assistant for Windows.">
+    <meta name="description" content="An offline-first AI desktop assistant that reads your screen and automates your workflows.">
     <link rel="stylesheet" href="style.css">
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=Outfit:wght@400;600;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
-    
-    <!-- Animated Background -->
-    <div class="bg-animated"></div>
-
     <!-- Navbar -->
-    <nav class="navbar glass">
+    <nav class="navbar">
         <div class="nav-content">
-            <div class="logo">Breeze</div>
+            <div class="logo">
+                <img src="logo.jpg" alt="Breeze" class="nav-logo-img">
+                <span>Breeze</span>
+            </div>
             <ul class="nav-links">
                 <li><a href="#features">Features</a></li>
                 <li><a href="#about">About</a></li>
-                <li><a href="https://github.com" target="_blank" class="github-link">GitHub</a></li>
+                <li><a href="https://github.com" target="_blank" class="github-link"><i data-lucide="github" class="icon-sm"></i> GitHub</a></li>
             </ul>
         </div>
     </nav>
@@ -31,34 +32,29 @@
     <!-- Hero Section -->
     <header class="hero">
         <div class="hero-content fade-in-up">
-            <h1 class="glow-text">Breeze</h1>
-            <p class="tagline">Ask. Learn. Click. Done.</p>
-            <p class="subtitle">An intelligent desktop tutor that reads your screen and automates your workflows.</p>
+            <img src="logo.jpg" alt="Breeze Logo" class="hero-logo-img">
+            <h1 class="hero-title">Breeze</h1>
+            <p class="tagline">An offline-first AI desktop assistant that reads your screen and automates your workflows.</p>
             
             <div class="cta-group">
-                <a href="#" class="btn-primary glow-btn">
-                    <span class="icon">⭳</span> Download for Windows
+                <a href="#" class="btn-primary">
+                    <i data-lucide="download"></i> Download for Windows
                 </a>
-                <a href="#features" class="btn-secondary glass-btn">Learn More</a>
+                <a href="#features" class="btn-secondary">
+                    View Documentation
+                </a>
             </div>
             <p class="version-text">v1.0.0 • Requires Windows 10/11</p>
         </div>
         
-        <!-- Mockup / Preview Image -->
+        <!-- Minimal Command Bar Mockup -->
         <div class="hero-mockup fade-in-up delay-1">
-            <div class="glass-mockup">
-                <div class="mockup-header">
-                    <div class="dot red"></div>
-                    <div class="dot yellow"></div>
-                    <div class="dot green"></div>
-                </div>
-                <div class="mockup-body">
-                    <div class="mockup-input">
-                        <span class="placeholder">Ask Breeze to do something...</span>
-                        <div class="mockup-icons">
-                            <span class="mic-icon">🎙</span>
-                            <span class="close-icon">✖</span>
-                        </div>
+            <div class="mockup-bar">
+                <div class="mockup-input-wrapper">
+                    <span class="placeholder">Ask Breeze to do something...</span>
+                    <div class="mockup-controls">
+                        <button class="mockup-btn mic-btn"><i data-lucide="mic"></i></button>
+                        <button class="mockup-btn close-btn"><i data-lucide="x"></i></button>
                     </div>
                 </div>
             </div>
@@ -67,50 +63,50 @@
 
     <!-- Features Section -->
     <section id="features" class="features">
-        <h2 class="section-title fade-in">Why choose Breeze?</h2>
+        <h2 class="section-title fade-in">Core Features</h2>
         <div class="features-grid">
             
-            <div class="feature-card glass scroll-reveal">
-                <div class="feature-icon">🤖</div>
+            <div class="feature-card scroll-reveal">
+                <div class="feature-icon"><i data-lucide="bot"></i></div>
                 <h3>Agent Mode</h3>
-                <p>Sit back as Breeze takes control of your mouse and keyboard to completely automate repetitive desktop workflows.</p>
+                <p>Breeze takes control of your mouse and keyboard to autonomously complete repetitive tasks on your desktop.</p>
             </div>
             
-            <div class="feature-card glass scroll-reveal delay-1">
-                <div class="feature-icon">🎙️</div>
+            <div class="feature-card scroll-reveal delay-1">
+                <div class="feature-icon"><i data-lucide="mic"></i></div>
                 <h3>Voice Commands</h3>
-                <p>Trigger actions instantly using your voice. Breeze listens, processes intent natively, and executes commands silently.</p>
+                <p>Trigger actions instantly using your voice. Breeze processes intent natively and executes commands silently.</p>
             </div>
             
-            <div class="feature-card glass scroll-reveal delay-2">
-                <div class="feature-icon">🎵</div>
+            <div class="feature-card scroll-reveal delay-2">
+                <div class="feature-icon"><i data-lucide="music"></i></div>
                 <h3>Media Integration</h3>
-                <p>Native deep integration with Spotify and YouTube Music. Just say "Play lo-fi beats" and let Breeze handle the rest.</p>
+                <p>Deep integration with Spotify and YouTube Music. Say "Play lo-fi beats" and let Breeze handle the rest.</p>
             </div>
             
-            <div class="feature-card glass scroll-reveal">
-                <div class="feature-icon">👁️</div>
+            <div class="feature-card scroll-reveal">
+                <div class="feature-icon"><i data-lucide="scan-text"></i></div>
                 <h3>Screen Awareness</h3>
-                <p>Breeze runs ultra-fast local OCR (Optical Character Recognition) to read the text on your screen in real time.</p>
+                <p>Ultra-fast local OCR (Optical Character Recognition) allows Breeze to read text on your screen in real time.</p>
             </div>
 
-            <div class="feature-card glass scroll-reveal delay-1">
-                <div class="feature-icon">🎨</div>
+            <div class="feature-card scroll-reveal delay-1">
+                <div class="feature-icon"><i data-lucide="layout"></i></div>
                 <h3>Premium UI</h3>
-                <p>A completely overhauled glassmorphic interface that floats cleanly above your taskbar without getting in the way.</p>
+                <p>A minimalist interface that floats cleanly above your taskbar without interrupting your workflow.</p>
             </div>
 
-            <div class="feature-card glass scroll-reveal delay-2">
-                <div class="feature-icon">🔒</div>
+            <div class="feature-card scroll-reveal delay-2">
+                <div class="feature-icon"><i data-lucide="shield-check"></i></div>
                 <h3>Privacy First</h3>
-                <p>Powered by local models (like Llama 3) and Tesseract OCR so your screen data never has to leave your computer.</p>
+                <p>Powered by local models (Llama 3) and Tesseract OCR so your screen data never leaves your machine.</p>
             </div>
 
         </div>
     </section>
 
     <!-- Footer -->
-    <footer class="footer glass">
+    <footer class="footer">
         <div class="footer-content">
             <div class="footer-logo">Breeze</div>
             <p>Built for the future of desktop automation.</p>
@@ -119,5 +115,8 @@
     </footer>
 
     <script src="script.js"></script>
+    <script>
+        lucide.createIcons();
+    </script>
 </body>
 </html>
