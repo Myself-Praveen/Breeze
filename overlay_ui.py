@@ -1,6 +1,6 @@
 import sys
 import ctypes
-from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QApplication, QLabel
+from PyQt6.QtWidgets import QWidget, QVBoxLayout, QHBoxLayout, QLineEdit, QPushButton, QApplication, QLabel, QGraphicsDropShadowEffect
 from PyQt6.QtCore import Qt, QRect, QTimer, QPropertyAnimation, QEasingCurve, pyqtSignal
 from PyQt6.QtGui import QPainter, QPen, QColor
 import threading
@@ -89,22 +89,31 @@ class ChatWindow(QWidget):
         self.container = QWidget()
         self.container.setStyleSheet("""
             QWidget {
-                background-color: rgba(30, 30, 30, 200);
-                border-radius: 15px;
+                background: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 rgba(40, 40, 45, 230), stop:1 rgba(20, 20, 25, 230));
+                border: 1px solid rgba(255, 255, 255, 30);
+                border-radius: 20px;
             }
         """)
+        shadow = QGraphicsDropShadowEffect()
+        shadow.setBlurRadius(30)
+        shadow.setColor(QColor(0, 0, 0, 150))
+        shadow.setOffset(0, 10)
+        self.container.setGraphicsEffect(shadow)
+
         h_layout = QHBoxLayout(self.container)
+        h_layout.setContentsMargins(15, 10, 15, 10)
         
         self.input_field = QLineEdit()
         self.input_field.setPlaceholderText("Ask Breeze to do something...")
         self.input_field.setStyleSheet("""
             QLineEdit {
-                background-color: rgba(50, 50, 50, 255);
-                color: white;
-                border: 1px solid #555;
-                border-radius: 10px;
-                padding: 8px;
-                font-size: 14px;
+                background-color: transparent;
+                color: #FFFFFF;
+                border: none;
+                padding: 5px;
+                font-family: 'Segoe UI', Inter, sans-serif;
+                font-size: 16px;
+                font-weight: 400;
             }
         """)
         self.input_field.returnPressed.connect(self.on_submit)
@@ -113,13 +122,16 @@ class ChatWindow(QWidget):
         self.voice_btn.setFixedSize(40, 40)
         self.voice_btn.setStyleSheet("""
             QPushButton {
-                background-color: #007BFF;
-                color: white;
+                background-color: rgba(255, 255, 255, 10);
+                color: #e0e0e0;
                 border-radius: 20px;
                 font-size: 18px;
+                border: 1px solid rgba(255, 255, 255, 15);
             }
             QPushButton:hover {
-                background-color: #0056b3;
+                background-color: rgba(0, 255, 255, 30);
+                color: #00FFFF;
+                border: 1px solid rgba(0, 255, 255, 50);
             }
         """)
         self.voice_btn.clicked.connect(self.on_voice)
@@ -128,13 +140,16 @@ class ChatWindow(QWidget):
         self.close_btn.setFixedSize(40, 40)
         self.close_btn.setStyleSheet("""
             QPushButton {
-                background-color: #dc3545;
-                color: white;
+                background-color: rgba(255, 255, 255, 10);
+                color: #e0e0e0;
                 border-radius: 20px;
                 font-size: 16px;
+                border: 1px solid rgba(255, 255, 255, 15);
             }
             QPushButton:hover {
-                background-color: #c82333;
+                background-color: rgba(255, 0, 0, 30);
+                color: #FF4444;
+                border: 1px solid rgba(255, 0, 0, 50);
             }
         """)
         self.close_btn.clicked.connect(QApplication.instance().quit)
@@ -162,7 +177,7 @@ class ChatWindow(QWidget):
         self.anim.setDuration(600)
         self.anim.setStartValue(start_geom)
         self.anim.setEndValue(final_geom)
-        self.anim.setEasingCurve(QEasingCurve.Type.OutBack)
+        self.anim.setEasingCurve(QEasingCurve.Type.OutExpo)
         self.anim.start()
 
     def on_submit(self):
@@ -180,23 +195,27 @@ class ChatWindow(QWidget):
         if is_listening:
             self.voice_btn.setStyleSheet("""
                 QPushButton {
-                    background-color: #dc3545;
-                    color: white;
+                    background-color: rgba(255, 50, 100, 40);
+                    color: #FF3366;
                     border-radius: 20px;
                     font-size: 18px;
+                    border: 1px solid rgba(255, 50, 100, 80);
                 }
             """)
             self.input_field.setPlaceholderText("Listening...")
         else:
             self.voice_btn.setStyleSheet("""
                 QPushButton {
-                    background-color: #007BFF;
-                    color: white;
+                    background-color: rgba(255, 255, 255, 10);
+                    color: #e0e0e0;
                     border-radius: 20px;
                     font-size: 18px;
+                    border: 1px solid rgba(255, 255, 255, 15);
                 }
                 QPushButton:hover {
-                    background-color: #0056b3;
+                    background-color: rgba(0, 255, 255, 30);
+                    color: #00FFFF;
+                    border: 1px solid rgba(0, 255, 255, 50);
                 }
             """)
             self.input_field.setPlaceholderText("Ask Breeze to do something...")
