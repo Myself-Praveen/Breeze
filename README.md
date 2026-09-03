@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="website/logo.jpg" alt="Breeze Logo" width="120" height="120" style="border-radius: 20px;">
+  <img src="website/banner.png" alt="Breeze Banner" width="100%" style="border-radius: 20px;">
   <h1>Breeze</h1>
   <p><strong>An offline-first AI desktop assistant that reads your screen and automates your workflows.</strong></p>
   
