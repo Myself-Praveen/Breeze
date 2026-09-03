@@ -1,4 +1,11 @@
 import sys
+import os
+import warnings
+
+# Suppress annoying terminal warnings
+warnings.filterwarnings("ignore", module="requests")
+os.environ["QT_LOGGING_RULES"] = "*.debug=false;qt.qpa.*=false"
+
 import signal
 from PyQt6.QtWidgets import QApplication
 from overlay_ui import ChatWindow
@@ -29,4 +36,6 @@ def main():
     sys.exit(app.exec())
 
 if __name__ == '__main__':
+    import multiprocessing
+    multiprocessing.freeze_support()
     main()
