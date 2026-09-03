@@ -253,12 +253,12 @@ class BreezeAgent:
             return True
             
         if cmd_lower.startswith("play "):
-            if "youtube" in cmd_lower or "yt" in cmd_lower:
-                song = cmd_lower.replace("play ", "").replace("on youtube music", "").replace("on youtube", "").replace("on yt music", "").replace("on yt", "").strip()
-                self.execute_action({"action": "play_youtube", "song": song})
-            else:
+            if "spotify" in cmd_lower:
                 song = cmd_lower.replace("play ", "").replace("on spotify", "").strip()
                 self.execute_action({"action": "play_spotify", "song": song})
+            else:
+                song = cmd_lower.replace("play ", "").replace("on youtube music", "").replace("on youtube", "").replace("on yt music", "").replace("on yt", "").strip()
+                self.execute_action({"action": "play_youtube", "song": song})
             return True
             
         if cmd_lower.startswith("search for ") or cmd_lower.startswith("google "):
