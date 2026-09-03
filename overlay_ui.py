@@ -124,8 +124,24 @@ class ChatWindow(QWidget):
         """)
         self.voice_btn.clicked.connect(self.on_voice)
         
+        self.close_btn = QPushButton("✖")
+        self.close_btn.setFixedSize(40, 40)
+        self.close_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #dc3545;
+                color: white;
+                border-radius: 20px;
+                font-size: 16px;
+            }
+            QPushButton:hover {
+                background-color: #c82333;
+            }
+        """)
+        self.close_btn.clicked.connect(QApplication.instance().quit)
+        
         h_layout.addWidget(self.input_field)
         h_layout.addWidget(self.voice_btn)
+        h_layout.addWidget(self.close_btn)
         
         layout.addWidget(self.container)
         self.setLayout(layout)
