@@ -276,8 +276,12 @@ class BreezeAgent:
             return True
             
         if cmd_lower.startswith("play "):
-            song = cmd_lower.replace("play ", "").replace("on spotify", "").strip()
-            self.execute_action({"action": "play_spotify", "song": song})
+            if "youtube" in cmd_lower or "yt" in cmd_lower:
+                song = cmd_lower.replace("play ", "").replace("on youtube music", "").replace("on youtube", "").replace("on yt music", "").replace("on yt", "").strip()
+                self.execute_action({"action": "play_youtube", "song": song})
+            else:
+                song = cmd_lower.replace("play ", "").replace("on spotify", "").strip()
+                self.execute_action({"action": "play_spotify", "song": song})
             return True
             
         if cmd_lower.startswith("search for ") or cmd_lower.startswith("google "):
@@ -360,22 +364,24 @@ class BreezeAgent:
                 return False
             self.action_count += 1
             song = result["song"]
+            import webbrowser
+            import urllib.parse
             import time
-            pyautogui.hotkey("win")
-            time.sleep(0.2)
-            pyautogui.typewrite("spotify", interval=0.01)
-            time.sleep(0.5)
-            pyautogui.hotkey("enter")
-            time.sleep(2)
-            pyautogui.hotkey("ctrl", "l")
-            time.sleep(0.5)
-            pyautogui.typewrite(song, interval=0.01)
-            time.sleep(0.5)
-            pyautogui.hotkey("tab")
-            time.sleep(0.2)
-            pyautogui.hotkey("tab")
-            time.sleep(0.2)
-            pyautogui.hotkey("enter")
+            query = urllib.parse.quote(song)
+            # Try to open desktop app directly via URI scheme
+            webbrowser.open(f"spotify:search:{query}")
+            time.sleep(1) # Fallback if user doesn't have it installed
+            
+        elif action == "play_youtube" and "song" in result:
+            if self.action_count >= 3:
+                self.ui.show_error("Action limit reached! Please confirm before continuing.")
+                return False
+            self.action_count += 1
+            song = result["song"]
+            import webbrowser
+            import urllib.parse
+            query = urllib.parse.quote(song)
+            webbrowser.open(f"https://music.youtube.com/search?q={query}")
             
         elif action == "search_web" and "query" in result:
             if self.action_count >= 3:
