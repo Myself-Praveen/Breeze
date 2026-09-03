@@ -109,16 +109,18 @@ class BreezeAgent:
         If the command implies pressing a keyboard shortcut, use action "hotkey" and provide the keys (e.g. ["win"], ["enter"]).
         If the command implies scrolling, use action "scroll" and provide amount (positive for up, negative for down).
         If the command asks to open an application or program, use action "open_app" and provide the "app_name".
+        If the command asks to message someone on WhatsApp, use action "whatsapp" and provide the "contact" name and "text" to send.
         If the user asks a general question, just reply with text.
         Respond with a JSON ARRAY of action objects ONLY, for example:
         [
             {{
-                "action": "click" | "highlight" | "reply" | "type" | "scroll" | "hotkey" | "open_app",
+                "action": "click" | "highlight" | "reply" | "type" | "scroll" | "hotkey" | "open_app" | "whatsapp",
                 "box_2d": [ymin, xmin, ymax, xmax],
                 "text": "Your reply or text to type",
                 "amount": 500,
                 "keys": ["win", "d"],
-                "app_name": "camera"
+                "app_name": "camera",
+                "contact": "John"
             }}
         ]
         """
@@ -172,8 +174,8 @@ class BreezeAgent:
                         break
                     self.action_count += 1
                     import time
-                    time.sleep(0.5) # small delay before typing
-                    pyautogui.typewrite(text, interval=0.05)
+                    time.sleep(0.2) # small delay before typing
+                    pyautogui.typewrite(text, interval=0.01)
                 
                 elif action == "hotkey" and "keys" in result:
                     if self.action_count >= 3:
@@ -181,7 +183,7 @@ class BreezeAgent:
                         break
                     self.action_count += 1
                     import time
-                    time.sleep(0.5)
+                    time.sleep(0.2)
                     pyautogui.hotkey(*result["keys"])
                 
                 elif action == "scroll":
@@ -200,9 +202,33 @@ class BreezeAgent:
                     app_name = result["app_name"]
                     import time
                     pyautogui.hotkey("win")
+                    time.sleep(0.2)
+                    pyautogui.typewrite(app_name, interval=0.01)
+                    time.sleep(0.2)
+                    pyautogui.hotkey("enter")
+                    
+                elif action == "whatsapp" and "contact" in result and "text" in result:
+                    if self.action_count >= 3:
+                        self.ui.show_error("Action limit reached! Please confirm before continuing.")
+                        break
+                    self.action_count += 1
+                    contact = result["contact"]
+                    msg = result["text"]
+                    import time
+                    pyautogui.hotkey("win")
+                    time.sleep(0.2)
+                    pyautogui.typewrite("whatsapp", interval=0.01)
+                    time.sleep(0.2)
+                    pyautogui.hotkey("enter")
+                    time.sleep(1.5) # Wait for whatsapp to open
+                    pyautogui.hotkey("ctrl", "f") # Search
                     time.sleep(0.5)
-                    pyautogui.typewrite(app_name, interval=0.05)
+                    pyautogui.typewrite(contact, interval=0.01)
                     time.sleep(0.5)
+                    pyautogui.hotkey("enter")
+                    time.sleep(0.5)
+                    pyautogui.typewrite(msg, interval=0.01)
+                    time.sleep(0.2)
                     pyautogui.hotkey("enter")
 
                 
@@ -223,16 +249,18 @@ class BreezeAgent:
         If the command implies pressing a keyboard shortcut, use action "hotkey" and provide the keys (e.g. ["win"], ["enter"]).
         If the command implies scrolling, use action "scroll" and provide amount (positive for up, negative for down).
         If the command asks to open an application or program, use action "open_app" and provide the "app_name".
+        If the command asks to message someone on WhatsApp, use action "whatsapp" and provide the "contact" name and "text" to send.
         If the user asks a general question, just reply with text.
         Respond with a JSON ARRAY of action objects ONLY, for example:
         [
             {{
-                "action": "click" | "highlight" | "reply" | "type" | "scroll" | "hotkey" | "open_app",
+                "action": "click" | "highlight" | "reply" | "type" | "scroll" | "hotkey" | "open_app" | "whatsapp",
                 "box_2d": [ymin, xmin, ymax, xmax],
                 "text": "Your reply or text to type",
                 "amount": 500,
                 "keys": ["win", "d"],
-                "app_name": "camera"
+                "app_name": "camera",
+                "contact": "John"
             }}
         ]
         """
@@ -295,8 +323,8 @@ class BreezeAgent:
                         break
                     self.action_count += 1
                     import time
-                    time.sleep(0.5)
-                    pyautogui.typewrite(text, interval=0.05)
+                    time.sleep(0.2)
+                    pyautogui.typewrite(text, interval=0.01)
                 
                 elif action == "hotkey" and "keys" in result:
                     if self.action_count >= 3:
@@ -304,7 +332,7 @@ class BreezeAgent:
                         break
                     self.action_count += 1
                     import time
-                    time.sleep(0.5)
+                    time.sleep(0.2)
                     pyautogui.hotkey(*result["keys"])
                 
                 elif action == "scroll":
@@ -323,9 +351,33 @@ class BreezeAgent:
                     app_name = result["app_name"]
                     import time
                     pyautogui.hotkey("win")
+                    time.sleep(0.2)
+                    pyautogui.typewrite(app_name, interval=0.01)
+                    time.sleep(0.2)
+                    pyautogui.hotkey("enter")
+                    
+                elif action == "whatsapp" and "contact" in result and "text" in result:
+                    if self.action_count >= 3:
+                        self.ui.show_error("Action limit reached! Please confirm before continuing.")
+                        break
+                    self.action_count += 1
+                    contact = result["contact"]
+                    msg = result["text"]
+                    import time
+                    pyautogui.hotkey("win")
+                    time.sleep(0.2)
+                    pyautogui.typewrite("whatsapp", interval=0.01)
+                    time.sleep(0.2)
+                    pyautogui.hotkey("enter")
+                    time.sleep(1.5) # Wait for whatsapp to open
+                    pyautogui.hotkey("ctrl", "f") # Search
                     time.sleep(0.5)
-                    pyautogui.typewrite(app_name, interval=0.05)
+                    pyautogui.typewrite(contact, interval=0.01)
                     time.sleep(0.5)
+                    pyautogui.hotkey("enter")
+                    time.sleep(0.5)
+                    pyautogui.typewrite(msg, interval=0.01)
+                    time.sleep(0.2)
                     pyautogui.hotkey("enter")
                 
         except Exception as e:
